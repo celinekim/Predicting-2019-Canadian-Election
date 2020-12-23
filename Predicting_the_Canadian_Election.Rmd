@@ -5,8 +5,7 @@ date: "21 December, 2020"
 output: html_document
 ---
 
-Github Repository Link:
-https://github.com/celinekim/Predicting-2019-Canadian-Election
+Code and data supporting this analysis is available at https://github.com/celinekim/Predicting-2019-Canadian-Election
 
 ```{r setup, include=FALSE, warning=FALSE}
 library(tidyverse)
