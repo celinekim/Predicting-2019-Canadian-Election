@@ -125,6 +125,9 @@ found in the Discussion section (Section 4) of this report.
 
 # 2. Methodology
 
+All scripts used for data cleaning and modeling are implemented in R for this
+paper.
+
 ## 2.1 Data
 
 The survey data set used in this analysis is from the 2019 Canadian Election
