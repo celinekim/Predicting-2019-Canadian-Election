@@ -1,0 +1,379 @@
+---
+output: html_document
+---
+<h3> <center> Appendix </center> </h3>
+  
+Below are the libraries and data used for this analysis. 
+
+```{r setup, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(broom)
+#install.packages("table1")
+library(table1)
+library(htmlTable)
+
+# Loading in the cleaned survey Data
+survey_data <- read_csv("./outputs/survey_data.csv")
+Newfoundland_survey_data <- read_csv("./outputs/survey_data_Newfoundland.csv")
+PEY_survey_data <- read_csv("./outputs/survey_data_PEY.csv")
+NovaScotia_survey_data <- read_csv("./outputs/survey_data_NovaScotia.csv")
+NewBrunswick_survey_data <- read_csv("./outputs/survey_data_NewBrunswick.csv")
+Quebec_survey_data <- read_csv("./outputs/survey_data_Quebec.csv")
+Ontario_survey_data <- read_csv("./outputs/survey_data_Ontario.csv")
+Manitoba_survey_data <- read_csv("./outputs/survey_data_Manitoba.csv")
+Sas_survey_data <- read_csv("./outputs/survey_data_Sas.csv")
+Alberta_survey_data <- read_csv("./outputs/survey_data_Alberta.csv")
+BC_survey_data <- read_csv("./outputs/survey_data_BC.csv")
+NorthernCanada_survey_data <- read_csv("./outputs/survey_data_NorthernCanada.csv")
+
+# Loading in the cleaned census Data
+census_data <- read_csv("./outputs/census_data.csv")
+Newfoundland_census_data <- read_csv("./outputs/census_data_Newfoundland.csv")
+PEY_census_data <- read_csv("./outputs/census_data_PEY.csv")
+NovaScotia_census_data <- read_csv("./outputs/census_data_NovaScotia.csv")
+NewBrunswick_census_data <- read_csv("./outputs/census_data_NewBrunswick.csv")
+Quebec_census_data <- read_csv("./outputs/census_data_Quebec.csv")
+Ontario_census_data <- read_csv("./outputs/census_data_Ontario.csv")
+Manitoba_census_data <- read_csv("./outputs/census_data_Manitoba.csv")
+Sas_census_data <- read_csv("./outputs/census_data_Sas.csv")
+Alberta_census_data <- read_csv("./outputs/census_data_Alberta.csv")
+BC_census_data <- read_csv("./outputs/census_data_BC.csv")
+NorthernCanada_census_data <- read_csv("./outputs/census_data_NorthernCanada.csv")
+raw_census_data <- read_csv("./outputs/not_grouped.csv")
+```
+
+Below are the logistic regression models created for each of the 11 regions (province/territory). 
+```{r, message=FALSE, warning=FALSE}
+model1 <- glm(cps19_vote_conservative ~ as.factor(is_working) + 
+             as.factor(gender_sex) + 
+               as.factor(is_Aboriginal) + as.factor(speak_French) + age_group + 
+               as.factor(bornin_canada) + 
+               household_income + education + as.factor(marital_status), 
+           data=Newfoundland_survey_data, family="binomial")
+
+model2 <- glm(cps19_vote_conservative ~ as.factor(is_working) + 
+             as.factor(gender_sex) + 
+               as.factor(is_Aboriginal) + as.factor(speak_French) + age_group + 
+               as.factor(bornin_canada) + 
+               household_income + education + as.factor(marital_status), 
+           data=PEY_survey_data, family="binomial")
+
+model3 <- glm(cps19_vote_conservative ~ as.factor(is_working) + 
+             as.factor(gender_sex) +  
+               as.factor(is_Aboriginal) + as.factor(speak_French) + age_group + 
+               as.factor(bornin_canada) + 
+               household_income + education + as.factor(marital_status), 
+           data=NovaScotia_survey_data, family="binomial")
+
+model4 <- glm(cps19_vote_conservative ~ as.factor(is_working) + 
+             as.factor(gender_sex) +  
+               as.factor(is_Aboriginal) + as.factor(speak_French) + age_group + 
+               as.factor(bornin_canada) + 
+               household_income + education + as.factor(marital_status), 
+           data=NewBrunswick_survey_data, family="binomial")
+
+model5 <- glm(cps19_vote_conservative ~ as.factor(is_working) + 
+             as.factor(gender_sex) + 
+               as.factor(is_Aboriginal) + as.factor(speak_French) + age_group + 
+               as.factor(bornin_canada) + 
+               household_income + education + as.factor(marital_status), 
+           data=Quebec_survey_data, family="binomial")
+
+model6 <- glm(cps19_vote_conservative ~ as.factor(is_working) + 
+             as.factor(gender_sex) +
+               as.factor(is_Aboriginal) + as.factor(speak_French) + age_group + 
+               as.factor(bornin_canada) + 
+               household_income + education + as.factor(marital_status), 
+           data=Ontario_survey_data, family="binomial")
+
+model7 <- glm(cps19_vote_conservative ~ as.factor(is_working) + 
+             as.factor(gender_sex) +  
+               as.factor(is_Aboriginal) + as.factor(speak_French) + age_group + 
+               as.factor(bornin_canada) + 
+               household_income + education + as.factor(marital_status), 
+           data=Manitoba_survey_data, family="binomial")
+
+model8 <- glm(cps19_vote_conservative ~ as.factor(is_working) + 
+             as.factor(gender_sex) +  
+               as.factor(is_Aboriginal) + as.factor(speak_French) + age_group + 
+               as.factor(bornin_canada) + 
+               household_income + education + as.factor(marital_status), 
+           data=Sas_survey_data, family="binomial")
+
+model9 <- glm(cps19_vote_conservative ~ as.factor(is_working) + 
+             as.factor(gender_sex) +  
+               as.factor(is_Aboriginal) + as.factor(speak_French) + age_group + 
+               as.factor(bornin_canada) + 
+               household_income + education + as.factor(marital_status), 
+           data=Alberta_survey_data, family="binomial")
+
+model10 <- glm(cps19_vote_conservative ~ as.factor(is_working) + 
+             as.factor(gender_sex) + 
+               as.factor(is_Aboriginal) + as.factor(speak_French) + age_group + 
+               as.factor(bornin_canada) + 
+               household_income + education + as.factor(marital_status), 
+           data=BC_survey_data, family="binomial")
+
+model11 <- glm(cps19_vote_conservative ~ as.factor(is_working) + 
+             as.factor(gender_sex) + 
+               as.factor(is_Aboriginal) + as.factor(speak_French) + age_group + 
+               as.factor(bornin_canada) + 
+               household_income + education + as.factor(marital_status), 
+           data=NorthernCanada_survey_data, family="binomial")
+```
+
+Below are tables with summary data of the logistic regression model used to perform analysis on a provincial basis. Tables A to K include the slope estimate, standard error, test statistic and p-values of the variables in the model for each province/territory.  
+```{r, echo=FALSE}
+# Newfoundland and the Labrador
+temp1 <- broom::tidy(model1)
+
+temp1 <- select(temp1,-c(term))
+
+temp1 %>% mutate_if(is.numeric, round, 4) %>% 
+  addHtmlTableStyle(align = "r", 
+                    css.cell=c("padding-left: 15px; padding-right:15px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:15px;"),
+                    css.header="font-weight: normal;") %>% 
+  htmlTable(rnames = c("Intercept", "Is Employed", "Is Female", "Is Aboriginal",
+                       "Speaks French", "Age Group", "Born In Canada", 
+                       "Household Income", "Education Level", "Legally Married",
+                       "Living Common Law", "Separated", "Divorced", "Widowed"),
+            header = c("Slope Estimate", "Standard Error", "Test Statistic",
+                       "P-Values"),
+            caption = "Table A: Summary of Logistic Regression Model for the Newfoundland and the Labrador Province")
+```
+
+```{r, echo=FALSE}
+# Prince Edward Island
+temp2 <- broom::tidy(model2)
+
+temp2 <- select(temp2,-c(term))
+
+temp2 %>% mutate_if(is.numeric, round, 4) %>% 
+  addHtmlTableStyle(align = "r", 
+                    css.cell=c("padding-left: 15px; padding-right:15px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:15px;"),
+                    css.header="font-weight: normal;") %>% 
+  htmlTable(rnames = c("Intercept", "Is Employed", "Is Female", "Is Aboriginal",
+                       "Speaks French", "Age Group", "Born In Canada", 
+                       "Household Income", "Education Level", "Legally Married",
+                       "Living Common Law", "Separated", "Divorced", "Widowed"),
+            header = c("Slope Estimate", "Standard Error", "Test Statistic",
+                       "P-Values"),
+            caption = "Table B: Summary of Logistic Regression Model for Prince Edward Island")
+```
+
+```{r, echo=FALSE}
+# Nova Scotia
+temp3 <- broom::tidy(model3)
+
+temp3 <- select(temp3,-c(term))
+
+temp3 %>% mutate_if(is.numeric, round, 4) %>% 
+  addHtmlTableStyle(align = "r", 
+                    css.cell=c("padding-left: 15px; padding-right:15px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:15px;"),
+                    css.header="font-weight: normal;") %>% 
+  htmlTable(rnames = c("Intercept", "Is Employed", "Is Female", "Is Aboriginal",
+                       "Speaks French", "Age Group", "Born In Canada", 
+                       "Household Income", "Education Level", "Legally Married",
+                       "Living Common Law", "Separated", "Divorced", "Widowed"),
+            header = c("Slope Estimate", "Standard Error", "Test Statistic",
+                       "P-Values"),
+            caption = "Table C: Summary of Logistic Regression Model for the Province of Nova Scotia")
+```
+
+```{r, echo=FALSE}
+# New Brunswick
+temp4 <- broom::tidy(model4)
+
+temp4 <- select(temp4,-c(term))
+
+temp4 %>% mutate_if(is.numeric, round, 4) %>% 
+  addHtmlTableStyle(align = "r", 
+                    css.cell=c("padding-left: 15px; padding-right:15px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:15px;"),
+                    css.header="font-weight: normal;") %>% 
+  htmlTable(rnames = c("Intercept", "Is Employed", "Is Female", "Is Aboriginal",
+                       "Speaks French", "Age Group", "Born In Canada", 
+                       "Household Income", "Education Level", "Legally Married",
+                       "Living Common Law", "Separated", "Divorced", "Widowed"),
+            header = c("Slope Estimate", "Standard Error", "Test Statistic",
+                       "P-Values"),
+            caption = "Table D: Summary of Logistic Regression Model for the Province of New Brunswick")
+```
+
+```{r, echo=FALSE}
+# Quebec
+temp5 <- broom::tidy(model5)
+
+temp5 <- select(temp5,-c(term))
+
+temp5 %>% mutate_if(is.numeric, round, 4) %>% 
+  addHtmlTableStyle(align = "r", 
+                    css.cell=c("padding-left: 15px; padding-right:15px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:15px;"),
+                    css.header="font-weight: normal;") %>% 
+  htmlTable(rnames = c("Intercept", "Is Employed", "Is Female", "Is Aboriginal",
+                       "Speaks French", "Age Group", "Born In Canada", 
+                       "Household Income", "Education Level", "Legally Married",
+                       "Living Common Law", "Separated", "Divorced", "Widowed"),
+            header = c("Slope Estimate", "Standard Error", "Test Statistic",
+                       "P-Values"),
+            caption = "Table E: Summary of Logistic Regression Model for Quebec")
+```
+
+```{r, echo=FALSE}
+# Ontario
+temp6 <- broom::tidy(model6)
+
+temp6 <- select(temp6,-c(term))
+
+temp6 %>% mutate_if(is.numeric, round, 4) %>% 
+  addHtmlTableStyle(align = "r", 
+                    css.cell=c("padding-left: 15px; padding-right:15px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:15px;"),
+                    css.header="font-weight: normal;") %>% 
+  htmlTable(rnames = c("Intercept", "Is Employed", "Is Female", "Is Aboriginal",
+                       "Speaks French", "Age Group", "Born In Canada", 
+                       "Household Income", "Education Level", "Legally Married",
+                       "Living Common Law", "Separated", "Divorced", "Widowed"),
+            header = c("Slope Estimate", "Standard Error", "Test Statistic",
+                       "P-Values"),
+            caption = "Table F: Summary of Logistic Regression Model for Ontario")
+```
+
+```{r, echo=FALSE}
+# Manitoba
+temp7 <- broom::tidy(model7)
+
+temp7 <- select(temp7,-c(term))
+
+temp7 %>% mutate_if(is.numeric, round, 4) %>% 
+  addHtmlTableStyle(align = "r", 
+                    css.cell=c("padding-left: 15px; padding-right:15px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:15px;"),
+                    css.header="font-weight: normal;") %>% 
+  htmlTable(rnames = c("Intercept", "Is Employed", "Is Female", "Is Aboriginal",
+                       "Speaks French", "Age Group", "Born In Canada", 
+                       "Household Income", "Education Level", "Legally Married",
+                       "Living Common Law", "Separated", "Divorced", "Widowed"),
+            header = c("Slope Estimate", "Standard Error", "Test Statistic",
+                       "P-Values"),
+            caption = "Table G: Summary of Logistic Regression Model for Manitoba")
+```
+
+```{r, echo=FALSE}
+# Saskatchewan
+temp8 <- broom::tidy(model8)
+
+temp8 <- select(temp8,-c(term))
+
+temp8 %>% mutate_if(is.numeric, round, 4) %>% 
+  addHtmlTableStyle(align = "r", 
+                    css.cell=c("padding-left: 15px; padding-right:15px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:15px;"),
+                    css.header="font-weight: normal;") %>% 
+  htmlTable(rnames = c("Intercept", "Is Employed", "Is Female", "Is Aboriginal",
+                       "Speaks French", "Age Group", "Born In Canada", 
+                       "Household Income", "Education Level", "Legally Married",
+                       "Living Common Law", "Separated", "Divorced", "Widowed"),
+            header = c("Slope Estimate", "Standard Error", "Test Statistic",
+                       "P-Values"),
+            caption = "Table H: Summary of Logistic Regression Model for Saskatchewan")
+```
+
+```{r, echo=FALSE}
+# Alberta
+temp9 <- broom::tidy(model9)
+
+temp9 <- select(temp9,-c(term))
+
+temp9 %>% mutate_if(is.numeric, round, 4) %>% 
+  addHtmlTableStyle(align = "r", 
+                    css.cell=c("padding-left: 15px; padding-right:15px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:15px;"),
+                    css.header="font-weight: normal;") %>% 
+  htmlTable(rnames = c("Intercept", "Is Employed", "Is Female", "Is Aboriginal",
+                       "Speaks French", "Age Group", "Born In Canada", 
+                       "Household Income", "Education Level", "Legally Married",
+                       "Living Common Law", "Separated", "Divorced", "Widowed"),
+            header = c("Slope Estimate", "Standard Error", "Test Statistic",
+                       "P-Values"),
+            caption = "Table I: Summary of Logistic Regression Model for Alberta")
+```
+
+```{r, echo=FALSE}
+# British Columbia
+temp10 <- broom::tidy(model10)
+
+temp10 <- select(temp10,-c(term))
+
+temp10 %>% mutate_if(is.numeric, round, 4) %>% 
+  addHtmlTableStyle(align = "r", 
+                    css.cell=c("padding-left: 15px; padding-right:15px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:15px;"),
+                    css.header="font-weight: normal;") %>% 
+  htmlTable(rnames = c("Intercept", "Is Employed", "Is Female", "Is Aboriginal",
+                       "Speaks French", "Age Group", "Born In Canada", 
+                       "Household Income", "Education Level", "Legally Married",
+                       "Living Common Law", "Separated", "Divorced", "Widowed"),
+            header = c("Slope Estimate", "Standard Error", "Test Statistic",
+                       "P-Values"),
+            caption = "Table J: Summary of Logistic Regression Model for British Columbia")
+```
+
+```{r, echo=FALSE}
+# Northern Canada (Nunavut, Yukon, Northwest Territories)
+temp11 <- broom::tidy(model11)
+
+temp11 <- select(temp11,-c(term))
+
+temp11 %>% mutate_if(is.numeric, round, 4) %>% 
+  addHtmlTableStyle(align = "r", 
+                    css.cell=c("padding-left: 15px; padding-right:15px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:30px;", 
+                               "padding-left: 30px; padding-right:15px;"),
+                    css.header="font-weight: normal;") %>% 
+  htmlTable(rnames = c("Intercept", "Is Employed", "Is Female", "Is Aboriginal",
+                       "Speaks French", "Age Group", "Born In Canada", 
+                       "Household Income", "Education Level", "Legally Married",
+                       "Living Common Law", "Separated", "Divorced", "Widowed"),
+            header = c("Slope Estimate", "Standard Error", "Test Statistic",
+                       "P-Values"),
+            caption = "Table K: Summary of Logistic Regression Model for Northern Canada")
+```
+
+

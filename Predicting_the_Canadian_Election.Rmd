@@ -1,0 +1,758 @@
+---
+title: "Predicting the 2019 Canadian Federal Election Using Multilevel Regression with Post-Stratification Under the Assumption of 100% Turnout"
+author: "Celine Kim (Student Number: 1001251147)"
+date: "21 December, 2020"
+output: html_document
+---
+
+### github: MUST INCLUDE GITHUB LINK
+
+```{r setup, include=FALSE, warning=FALSE}
+library(tidyverse)
+library(broom)
+#install.packages("table1")
+library(table1)
+library(htmlTable)
+
+# Loading in the cleaned survey Data
+survey_data <- read_csv("./outputs/survey_data.csv")
+Newfoundland_survey_data <- read_csv("./outputs/survey_data_Newfoundland.csv")
+PEY_survey_data <- read_csv("./outputs/survey_data_PEY.csv")
+NovaScotia_survey_data <- read_csv("./outputs/survey_data_NovaScotia.csv")
+NewBrunswick_survey_data <- read_csv("./outputs/survey_data_NewBrunswick.csv")
+Quebec_survey_data <- read_csv("./outputs/survey_data_Quebec.csv")
+Ontario_survey_data <- read_csv("./outputs/survey_data_Ontario.csv")
+Manitoba_survey_data <- read_csv("./outputs/survey_data_Manitoba.csv")
+Sas_survey_data <- read_csv("./outputs/survey_data_Sas.csv")
+Alberta_survey_data <- read_csv("./outputs/survey_data_Alberta.csv")
+BC_survey_data <- read_csv("./outputs/survey_data_BC.csv")
+NorthernCanada_survey_data <- 
+  read_csv("./outputs/survey_data_NorthernCanada.csv")
+
+# Loading in the cleaned census Data
+census_data <- read_csv("./outputs/census_data.csv")
+Newfoundland_census_data <- read_csv("./outputs/census_data_Newfoundland.csv")
+PEY_census_data <- read_csv("./outputs/census_data_PEY.csv")
+NovaScotia_census_data <- read_csv("./outputs/census_data_NovaScotia.csv")
+NewBrunswick_census_data <- read_csv("./outputs/census_data_NewBrunswick.csv")
+Quebec_census_data <- read_csv("./outputs/census_data_Quebec.csv")
+Ontario_census_data <- read_csv("./outputs/census_data_Ontario.csv")
+Manitoba_census_data <- read_csv("./outputs/census_data_Manitoba.csv")
+Sas_census_data <- read_csv("./outputs/census_data_Sas.csv")
+Alberta_census_data <- read_csv("./outputs/census_data_Alberta.csv")
+BC_census_data <- read_csv("./outputs/census_data_BC.csv")
+NorthernCanada_census_data <- read_csv("./outputs/census_data_NorthernCanada.csv")
+raw_census_data <- 
+  read_csv("./outputs/not_grouped.csv")
+```
+
+```{css, echo=FALSE}
+table.Rtable1 {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+}
+
+table.Rtable1 caption{
+    color: rgb(51, 51 ,51);
+}
+```
+
+# Abstract
+
+During the pre-election period, we hear a lot about election forecasting, which
+even takes the turnout rate of the election into consideration. Unlike these
+surveys and predictions, this paper focuses on predicting the election results
+under the assumption of a 100% turnout rate. This assumption is used to
+illustrate if the results would have been different if everyone had voted. The
+2019 Canadian federal election had a turnout rate of 67%, a higher than usual
+rate but a number far below 100%. Using the Canadian Election Study survey data
+with 37,822 number of observations, 11 variables were used to build a multilevel
+logistic model. The forward variable selection process with AIC indicated that
+all variables should be used for the best fit. Then, the 2016 census data
+provided by Statistics Canada with 930,421 records was used for
+post-stratification. In reality, the Conservative Party won at the national
+level with 34.34% of the total votes. However, the prediction based on a 100%
+turnout rate revealed that the Conservatives might have won only 22.25% of the
+votes. This lower rate is in accordance with the general belief that higher
+turnout rates are bad for the Conservative Party. Further analysis conducted on
+a provincial level also showed similar results.
+
+# Keywords
+Multilevel Regression with Post-Stratification, Logistic Regression, Election
+Forecasting, Political Polling, Elections, Akaike Information Criterion, Forward
+Selection, Canada
+
+# 1. Introduction
+Before the day of the 2019 Canadian federal election, major pollsters predicted
+that the Conservative Party will win the popular vote while the Liberal Party
+will win more number of seats. This projection was proven to be pretty accurate
+as a non-majority Liberal government was formed. However, as it was a very close
+call, it took longer than usual until the result was confirmed. According to
+Elections Canada, the overall turnout rate of this election was 67%, the second
+highest turnout rate among the past seven federal elections. By region, the
+highest rate was 74.0% in Prince Edward Island, and the lowest was 47.7% in
+Nunavut (Elections Canada, 2019). Among different age groups, voters between the
+age 18 to 24 had the lowest turnout rate while voters from age 65 to 74 had the
+highest turnout rate (Statistics Canada, 2020).
+
+It has been a long belief that turnout rates play a crucial role in the election
+results; lower turnout rates are preferable for the more conservative party.
+Some studies all over the world also support this belief. According to “The
+Partisan Effects of Voter Turnout: How Conservatives Profit from Rainy Election
+Days”, bad weather on election day reduces voter participation, which benefits
+the Republican Party in the United States Presidential Elections (Arnold, 2015).
+Multiple papers suggest this is true in many different countries including Spain
+(Artés, 2014) and Germany (Arnold & Freier, 2016). Therefore, in this report, we
+will examine the effect of the turnout rate on the 2019 federal election of
+Canada. With a turnout rate of 67%, it was one of the years with a high
+participation rate, which might have worked in favour of the Liberal Party.
+However, what if ‘everyone’ had voted? Would the results have been different? If
+so, would the Liberal Party have been able to win the majority popular vote?
+
+This report will use multilevel regression with post-stratification (MRP) based
+on election survey data from the Canadian Election Study (CES) and census data
+from Statistics Canada to predict the results of the election under the
+assumption of a 100% turnout rate. Since the 2019 census data is still
+unavailable, the most recent census data available from 2016 was used, which may
+be a possible source of error in this study. Information about both the data and
+model are provided in the Methodology section (Section 2). This section involves
+general information about the two data sets, variables used, how data was
+cleaned, the model that was used to perform the election forecasting analysis
+and the idea behind the post-stratification technique used. The Results section
+(Section 3) relays results of the analysis including tables, plots and figures.
+Finally, conclusions, weaknesses of this analysis and future next steps can be
+found in the Discussion section (Section 4) of this report.
+
+# 2. Methodology
+
+## 2.1 Data
+
+The survey data set used in this analysis is from the 2019 Canadian Election
+Study (CES), performed by Laura Stephenson, Allison Harell, Daniel Rubenson and
+Peter Loewen. Data  was collected from surveys conducted during the 2019 federal
+election campaign. The purpose of the CES to analyze the political behavior and
+preferences of Canadians. Two data sets were constructed using online surveys
+and phone surveys. Between the two data sets, the online survey data was used to
+perform the analysis in this study due to the larger sample size. Also, the 2019
+CES data are composed of two parts: campaign period survey and post election
+survey. As we are trying to predict the result of the Canadian federal election
+if every one had voted, only the pre-election campaign period survey was used.
+The population of this survey is all Canadian citizens and permanent residents
+who are of age 18 and above. Using an online survey tool called Qualtrics, a
+sample of 37,822 Canadians was targetted from September 13th to October 21st of
+2019.
+
+The post-stratification data set used in this analysis is from the 2016 Census
+public use microdata file conducted by Statistics Canada, which is the latest
+census data available. Census of population is conducted every five years to
+collect sociodemographic and statistical data used by the government and
+organizations to make important regulatory decisions. Using three types of data
+collection methods including mail-out, list/leave and canvasser, a response rate
+of 98.4% was reached. Among the Canadian population, 2.7% is chosen as a sample
+from a target of 15.4 million dwellings in Canada.
+
+The variables that were used in this analysis are age, gender/sex, region
+(province/territory), employment status, ethnicity, education level, household
+income, knowledge of the French language, place of birth and marital status.
+
+First, both data sets were cleaned to only include the chosen variable explained
+previously. Since citizens of age 18 or older can vote, subjects under 18 were
+removed from the data. For the survey data, the numerical age was grouped into
+five different age groups which were ages 18 to 29, 30 to 39, 40 to 49, 50 to
+59, and 60 and over. Since the census data groups the Northwest Territories,
+Yukon and Nunavut into Northern Canada, survey data was also cleaned to group
+these three provinces together. In addition, following the user guide of the
+census data, Aboriginals and First Nations, Inuk and Inuit, and Métis were
+grouped under the Aboriginal ethnical background category for the survey data.
+Unfortunately, since census data only includes information about sex and no
+information about gender, those who identify as men were grouped to be "male",
+those who identify as women were grouped to be "female" and those who identify
+as other (trans, non-binary, two-spirit, gender-queer) had to be removed. Also,
+employment status involves two categories: those who are working and those who
+are not working. Those who are working were defined to be people who have full
+or part-time jobs or people who are self-employed. Finally, respondents were
+grouped into two categories under the  variable 'place of birth': those who were
+born in Canada and those who were not.
+
+After the data cleaning process, all variables in this analysis can be
+classified as  categorical variables. Among those variables, age, education
+level and household income are ordinal variables. In addition, gender/sex,
+employment status, whether one's ethnical background is Aboriginal or not,
+knowledge of the French language and place of birth are all binary variables.
+
+Below is the table of baseline characteristics of the survey and census data. 
+
+```{r, echo=FALSE, warning=FALSE}
+survey2 <- survey_data
+census2 <- raw_census_data
+
+survey2 <- 
+  survey2 %>%
+  mutate(status = "Survey")
+
+survey2 <- select(survey2, -c(cps19_vote_liberal, cps19_vote_conservative))
+
+census2 <- 
+  census2 %>%
+  mutate(status = "Census")
+
+full <- rbind(survey2, census2)
+
+full$status <- factor(full$status, levels=c("Survey", "Census"), 
+                      labels = c("Survey Data", "Census Data"))
+
+full$Sex <- factor(full$gender_sex, levels=c(1,2), labels=c("Male", "Female"))
+
+full$Age <- factor(full$age_group, levels=c(101,102,103,104,105), 
+                   labels=c("Age 18 to 29", "Age 30 to 39", "Age 40 to 49", 
+                            "Age 50 to 59", "Age 60 and over"))
+
+full$Region <- factor(full$province, levels=c(10,11,12,13,24,35,46,47,48,59,70),
+                      labels=c("Newfoundland and Labrador", 
+                               "Prince Edward Island", "Nova Scotia", 
+                               "New Brunswick", "Quebec", "Ontario", "Manitoba",
+                               "Saskatchewan", "Alberta", "British Columbia",
+                               "Northern Canada"))
+
+full$Employment <- 
+  factor(full$is_working, levels=c(0,1), 
+         labels=c("Not Employed", 
+                  "Employed (Full-time, Part-time, Self-employed)"))
+
+full$Ethnicity <- factor(full$is_Aboriginal, levels=c(0,1), 
+                         labels=c("Not Aboriginal", 
+                                  "From Aboriginal Ethnical Background"))
+
+full$Speaks_French <- factor(full$speak_French, levels=c(0,1),
+                             labels=c("No knowledge of the French language", 
+                                      "Knows the French language"))
+
+full$Born_In_Canada <- factor(full$bornin_canada, levels=c(0,1),
+                              labels=c("Not Born in Canada", "Born in Canada"))
+
+full$Education <- 
+  factor(full$education, levels=c(0,1,2,3,4,5,6),
+         labels=c("Prefer not to answer", 
+                  "No schooling or below secondary school",
+                  "Secondary school diploma or equivalent",
+                  "Some or completed technical, commmunity college, CEGEP, College Classique",
+                  "Some university or Bachelor's degree",
+                  "Master's degree", 
+                  "Professional degree or doctorate"))
+
+full$Household_Income <- factor(full$household_income, 
+                                levels=c(0,1,2,3,4,5,6,7),
+                                labels=c("Prefer not to answer", 
+                                         "$0 to $30,000",
+                                         "$30,001 to $60,000",
+                                         "$60,001 to $90,000",
+                                         "$90,001 to $11,000",
+                                         "$110,001 to $150,000", 
+                                         "$150,001 to $200,000",
+                                         "More than $200,000"))
+
+full$Marital_Status <- factor(full$marital_status, levels=c(1,2,3,4,5,6),
+                              labels=c("Never legally married", 
+                                       "Legally married", "Living common law",
+                                       "Separated", "Divorced", "Widowed"))
+
+label(full$Sex) <- "Gender/Sex"
+label(full$Age) <- "Age Groups"
+label(full$Region) <- "Region (Province/Territory)"
+label(full$Employment) <- "Employment Status"
+label(full$Ethnicity) <- "Ethnical Background"
+label(full$Education) <- "Education Level"
+label(full$Household_Income) <- "Household Income"
+label(full$Speaks_French) <- "Knowledge of the French Language"
+label(full$Born_In_Canada) <- "Place of Birth"
+label(full$Marital_Status) <- "Marital Status"
+
+table1(~ Sex + Age + Region + Employment + Ethnicity + Education + 
+         Household_Income + Speaks_French + Born_In_Canada + Marital_Status | 
+         status, data=full, overall=F, 
+       caption = "Table 1: Baseline Characteristics Table", topclass="Rtable1" )
+```
+
+
+The characteristics of the two data sets are clearly shown in Table 1. There are
+a total of 11,722 observations for the survey data,  while there are 733,042
+total observations for the census data. This shows that there are 60 times more
+observations in the census data than the survey data.
+
+For the survey data, there are nearly twice as many female respondents than male
+respondents. However, for the census data, the ratio of female to male is
+similar. The age, province, place of birth, knowledge of the French language and
+marital status distributions are similar for both data sets. The largest age
+group is those who are age 60 and over. Also, the province Ontario has the
+largest proportion among the 11 regions for both data sets. While nearly half of
+the respondents of the survey data were not employed, there are nearly twice as
+many employed than those who are not in the census data. The two data sets
+showed different distributions for education levels and household income. While
+those with some university education or a Bachelor's degree had the highest
+proportion of 32.5% in the survey data, those with some or completed technical,
+community college, CEGEP or College Classique had the highest proportion of
+30.0% in the census data. In addition, in the survey data, nearly 30% of the
+respondents preferred not to disclose their household income. However, only 0.6%
+did so in the census data.
+
+## 2.2 Model
+In this section, I will provide details on the multilevel regression model,
+specifically the logistic model used, and explain the explanatory and response
+variables used in the model. The model conducts analysis on a nationwide basis.
+In section 2.2.2, the forward variable selection method using the Akaike
+Information Criterion (AIC) will be explained. Section 2.2.3 relays the
+computation techniques used in the post-stratification procedures to remove and
+adjust demographic bias in the survey data. Finally, the last section of part 2
+will explain how province-based analysis has been conducted for the same data
+set.
+
+### 2.2.1 Multi-level Regression Model: Logistic Regression Model
+Each respondent indicated whether one will vote for the Conservative Party in
+the 2019 federal election. Thus, we model the binary responses of whether one
+will vote for the Conservative Party or not, $y \in \{0, 1\}$ to be Bernoulli
+distributed where the probability of voting for the Conservative Party
+corresponds to $p \in \mathbb{R}_{[0,1]}$. In the model, $y=1$ represents that
+the respondent intends to vote for the Conservative Party and $y=0$ represents
+that the respondent intends not to vote for the Conservative Party. Since this
+is a binary response variable, a logistic regression model will be used.
+
+$$ \tag{1} y = \log{\frac{p}{1-p}}$$
+$$ \tag{2} \log{\frac{p}{1-p}} = \beta_0 + \sum_{j=1}^{k} \beta_j X_{ij}\ $$
+The covariates $X_i = \{X_{i1}, ... X_{ik}\}$ represent the various
+subcategories that the respondents of the survey belong to, including age group
+(age 18-29, 30-39, 40-49, 50-59, 60 and over), employment status (whether one is
+working - full-time, part-time, self-employed - or not), gender/sex (female,
+male), ethnical background (whether one's ethnical background is Aboriginal or
+not), place of birth (whether one was born in Canada or not), total household
+income for the year 2018 (no income to \$30,000, \$30,001 to 60,000, \$60,001 to
+\$90,000, \$90,001 to \$110,000, \$110,001 to \$150,000, \$150,001 to \$200,000,
+more than \$200,000, don't know/prefer not to answer), education level (no
+schooling or below a secondary school diploma, secondary school diploma or
+equivalent certificate, some or completed technical, community college, CEGEP,
+College Classique, some university or Bachelor's degree, Master's degree,
+professional degree or doctorate, or prefer not to answer), knowledge of the
+French language (knows the French language or not), marital status (never
+legally married, legally married, living common law, separated, divorced,
+widowed), and province or territory (Ontario, Quebec, Nova Scotia, New
+Brunswick, Manitoba, British Columbia, Prince Edward Island, Saskatchewan,
+Alberta, Newfoundland and Labrador, and the Northern Territories). Therefore,
+there are a total of $k=49$ covariates. While covariates pertaining to province,
+age group, household income, education status and marital status are categorical
+variables, employment status, gender/sex, whether one's ethnical background is
+Aboriginal or not, whether one's place of birth is Canada, and the knowledge of
+the language French are binary covariates.
+
+### 2.2.2 Variable Selection Criteria: Forward Selection based on AIC
+In order to justify whether the explanatory variables used in the model are
+statistically significant, forward selection based on AIC was used as the
+variable selection criteria. To assess the goodness of fit of the model while
+penalizing for the complexity of the model, AIC, which is a log-likelihood based
+criterion developed by a a Japanese statistician Hirotugu Akaike, is used in the
+variable selection process. In general, a smaller AIC value indicates a better
+model (Sue-Chee, 2020, slide 17-18). The forward selection process is an
+approach used in stepwise regression. In this analysis, we started from a model
+with only the intercept and added one term each time until adding an additional
+variable to the model cannot create a smaller AIC value.
+
+### 2.2.3 Post-Stratification 
+Post-stratification is a statistical analysis technique that involves dividing
+data into small demographic cells, adding those cell-level estimates and
+extrapolating to create a population-level estimate in order to predict the
+response variable. This technique is useful because it enables correction for
+non-probability sampling errors and accurate estimate for population level
+predictions. Therefore, a post-stratification analysis is performed to estimate
+the nationwide proportion of voters who will vote for the Conservative Party.
+
+In this case, cells are created by all possible combinations of covariates
+including province, age, gender/sex, employment status, ethnicity, place of
+birth, household income, education level, knowledge of the French language and
+marital status. Thus, there are a total of $H = 591,360$ cells.
+
+Then, the size of each cell based on the nationwide Canadian census, $N_i$ of
+each cell $i$, is counted. Then, the weight of each cell is calculated by
+dividing by the total population size $\sum_{i=1}^{H} N_i$. Next, the
+post-stratified estimate on the log odds of the population voting for the
+Conservative Party, $\hat{y}^{PS}$, is the weighted average of the log odds of
+the sub-population corresponding to each cell voting for the Conservative party,
+$\hat{y}_i$.
+
+$$\tag{3} \hat{y}^{PS} = \frac{\sum N_i \hat{y}_i}{\sum N_i}$$ 
+(Caetano, 2020, slide 4).
+
+### 2.2.4 Provincial Basis Analysis
+While the analysis performed in the previous sections were on a nationwide
+basis, Section 2.2.4 corresponds to the analysis done on a provincial basis. The
+same modelling was done for each province.
+
+Thus, we model the binary responses of whether one living in a certain province
+will vote for the Conservative Party or not, $y_i \in \{0, 1\}$, $i \in
+\{$Ontario, Quebec, Nova Scotia, New Brunswick, Manitoba, British Columbia,
+Prince Edward Island, Saskatchewan, Alberta, Newfoundland and Labrador, and the
+Northern Territories$\}$ to be Bernoulli distributed where the probability of
+voting for the Conservative Party corresponds to $p \in \mathbb{R}_{[0,1]}$. In
+the model, $y_i=1$ represents that the respondent living in the province $i$
+intends to vote for the Conservative Party and $y_i=0$ represents that the
+respondent living in the province $i$ intends not to vote for the Conservative
+Party.
+
+The mathematical notation of the model is: 
+
+$$ \tag{4} y_i = \log{\frac{p}{1-p}}$$
+$$ \tag{5} \log{\frac{p}{1-p}} = \beta_0 + \sum_{j=1}^{k-1} \beta_j X_{ij}\ $$
+The Canadian federal election is a "first past the post" system where the leader
+of the party that won the most seats in the House of Commons becomes the Prime
+Minister. In the 2019 Canadian federal election, a party had to win 170 seats to
+become a majority government. Since popular vote does not always correspond with
+the seat count in the Canadian election, an additional prediction based on
+calculations per province was also performed. Therefore, I grouped by province
+and included it as a bin to conduct post-stratification analysis on vote per
+province.
+
+Since province has been removed when calculating the total possible
+combinations, there are a total of $H = 107,520$ cells.
+
+The result of this additional analysis is in Table 3 of the Results.
+
+# 3. Results
+
+```{r, echo=FALSE, include=FALSE, warning=FALSE}
+# Creating the Model
+model <- glm(cps19_vote_conservative ~ as.factor(is_working) + 
+             as.factor(gender_sex) + as.factor(is_Aboriginal) + 
+               as.factor(speak_French) + age_group + 
+               as.factor(bornin_canada) + as.factor(province) + 
+               household_income + education + as.factor(marital_status), 
+           data=survey_data, family="binomial")
+```
+
+Below is the summary data of the logistic regression model used in this report.
+Table 2 includes the slope estimate, standard error, test statistic and p-values
+of the variables in the full model.
+
+```{r, echo=FALSE}
+temp <- broom::tidy(model)
+
+temp <- select(temp,-c(term))
+
+temp %>%
+  mutate_if(is.numeric, round, 4) %>%
+  addHtmlTableStyle(align = "r", css.cell=c("padding-left: 15px; padding-right:15px;", "padding-left: 30px; padding-right:30px;", "padding-left: 30px; padding-right:30px;", "padding-left: 30px; padding-right:30px;", "padding-left: 30px; padding-right:15px;"),
+                    css.header="font-weight: normal;") %>% 
+  htmlTable(rnames = c("Intercept", 
+            "Is Employed", "Is Female", "Is Aboriginal", "Speaks French", 
+            "Age Group", "Born In Canada", "Prince Edward Island",
+            "Nova Scotia", "New Brunswick", "Quebec", "Ontario", "Manitoba",
+            "Saskatchewan", "Alberta", "British Columbia", "Northern Canada",
+            "Household Income", "Education Level",
+            "Legally Married", "Living Common Law", "Separated", "Divorced",
+            "Widowed"),
+            header = c("Slope Estimate", "Standard Error", "Test Statistic",
+                       "P-Values"),
+            caption = "Table 2: Summary of Logistic Regression Model")
+```
+
+In general, the intercept represents when all the covariates are 0. In this
+specific model, this situation is not interpretable because a value of 0 cannot
+be assigned to some of the categorical covariates. For example, a numerical
+value of 0 does not correspond to any of the six cateogries of the variable
+'marital status'. Also, since all respondents are of age 18 and older, there is
+no category in the age groups that pertain to the value of 0.
+
+$\beta_j$ are coefficients that represent the change in log odds for every one
+unit increase in the respective covariates. For all binary covariates, one unit
+increase in this case represents presence of the corresponding condition. As
+explained before in Section 2.1, during the data cleaning process, for the
+categorical covariates, the categories of each variable have been assigned a
+numerical value. Thus, a one unit increase represents a jump from one category
+to the next category. For example, a jump from the age group '20 to 29' to '30
+to 39'.
+
+Excluding the variables 'employment status' and some categories of the covariate
+'province' and 'marital status', the p-value of variables in the logistic
+regression model are below 0.05. Thus, while we can reject the null hypotheses
+that slope of some covariates are 0, we cannot for the covariates with p-values
+greater than 0.05.
+
+```{r, echo=FALSE, include=FALSE, warning=FALSE}
+mint <- glm(cps19_vote_conservative~1,data=survey_data, family="binomial")
+forwardAIC <- step(mint,scope=list(lower=~1, upper=~as.factor(is_working) + 
+             as.factor(gender_sex) +  as.factor(is_Aboriginal) + 
+               as.factor(speak_French) + age_group + as.factor(bornin_canada) +
+               as.factor(province) + household_income + education +
+               as.factor(marital_status)), 
+             direction="forward", data=survey_data)
+```
+
+In order to decide whether to include the covariates with p-values higher than
+0.05, forward selection with AIC was used for the variable selection process.
+However, AIC of the model with only the intercept term was 12178.2, while the
+AIC of the full model was 11227.9. Since the full model had the lowest AIC
+value, all explanatory variables are used in the model of this analysis.
+
+```{r, echo=FALSE, include=FALSE, warning=FALSE}
+# Here I will perform the post-stratification calculation
+census_data$estimate <-
+  model %>%
+  predict(newdata = census_data)
+
+census_data <- census_data %>%
+  mutate(conservative_predict_prop = estimate*cell_prop_of_division_total)
+
+logit2prob <- function(logit){
+  odds <- exp(logit)
+  prob <- odds / (1 + odds)
+  return(prob)
+}
+
+conservative_predict_overall <- sum(census_data[, 'conservative_predict_prop'], na.rm=TRUE)
+conservative_predict_overall_prob <- logit2prob(conservative_predict_overall)
+```
+
+The results from the post-stratification analysis are that the log odds of
+voting for the Conservative Party is -1.2512 and the estimated proportion of
+voters in favour of voting for the Conservative Party is 0.2225.
+
+Using the post-stratification analysis of Section 2.2.3 of the proportion of
+voters intending to vote for the Conservative Party modelled by a logistic
+regression model, I estimate that the proportion of voters in favour of voting
+for the Conservative Party to be 0.2225.
+
+The analysis was repeated on a provincial basis. The details including slope
+estimate, standard error, test statistic, p-values, of the models used in this
+analysis can be found in Tables A to K of the Appendix.
+
+There were cases where the sign and magnitude of the slope of some covariates
+have changed dramatically from the full model. The slope for the variable
+'employment status' changed for the provinces Prince Edward Island (PEI), Nova
+Scotia, New Brunswick, Manitoba and British Columbia. The slope for the variable
+'gender/sex' changed for only the Northern Canadian territory. The slope for the
+variable indicating whether one's ethnical background is Aboriginal or not
+changed for the provinces PEI and Nova Scotia. The slope for the variable
+indicating whether one has knowledge about the French language changed for the
+provinces Newfoundland and the Labrador, PEI, Manitoba and the Northern Canadian
+territory. The slope for the variable 'age' changed from positive to negative
+for provinces Newfoundland and the Labrador, Nova Scotia, Manitoba, Saskatchewan
+and the Northern Canadian territory. The slope for the variable indicating
+whether one's place of birth is Canada changed for the provinces Nova Scotia,
+Quebec and British Columbia (BC). The slope for the variable 'household income'
+changed from positive to negative for provinces Newfoundland and the Labrador,
+PEI and Saskatchewan. The slope for the variable 'education level' changed from
+negative to positive for provinces PEI, Nova Scotia and the Northern  Canadian
+territory. The slope for the variable indicating whether one is legally married
+changed for only the province PEI. The slope for the variable indicating whether
+one is living common law changed for province Newfoundland and the Labrador,
+PEI, Nova Scotia, New Brunswick, Manitoba, Saskatchewan and the Northern
+Canadian territory. The slope for the variable indicating whether one is
+separated changed from negative to positive for provinces Newfoundland and the
+Labrador, Manitoba, Saskatchewan, Alberta and the Northern Canadian territory.
+The slope for the variable indicating whether one is divorced hanged for
+provinces Newfoundland and the Labrador, New Brunswick and Alberta. The slope
+for the variable indicating whether one is widowed changed from positive to
+negative for provinces Newfoundland and the Labrador, PEI, New Brunswick and
+Quebec.
+
+Below is Table 3 which shows the log odds of the population voting for the
+Conservative Party and proportion of voters in favour of the Conservative Party
+per province basis.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Here I will perform the post-stratification calculation on a provincial basis
+additional_data <-
+  census_data %>%
+  mutate(conservative_predict_prop_province =
+           estimate*cell_prop_of_division_total_state) %>%
+  group_by(province) %>%
+  summarise(conservative_predict_province = sum(conservative_predict_prop_province),
+            conservative_predict_province_prob = logit2prob(conservative_predict_province))
+
+add_data <- select(additional_data,-c(province)) 
+
+add_data %>%  
+  mutate_if(is.numeric, round, 4) %>% 
+  addHtmlTableStyle(css.header="font-weight: normal;", css.cell=c("padding-left: 15px; padding-right:15px;", "padding-left: 30px; padding-right:30px;", "padding-left: 30px; padding-right:15px;")) %>% 
+  htmlTable(rnames = c("Newfoundland and Labrador", "Prince Edward Island",
+            "Nova Scotia", "New Brunswick", "Quebec", "Ontario", "Manitoba",
+            "Saskatchewan", "Alberta", "British Columbia", "Northern Canada"),
+            header = 
+              c("Log Odds of Population Voting for the Conservative Party per Province Basis", 
+                "Proportion of Voters in Favour of the Conservative Party per Province Basis"),
+            caption = "Table 3: Summary of the Provincial Basis Analysis")
+```
+
+
+Below is the barplot of the proportion of voters in favour of the Conservative
+Party per province basis using the result of the additional analysis. The
+provinces are denoted in abbreviation form. As shown in Figure 1, the proportion
+of voting for the Conservative for all provinces is less than 0.5, meaning that
+there are no provinces where more than half of the voters are willing to vote
+for the Conservative Party.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#need to create margin for title
+par(oma=c(1,0,0,0), family = "Helvetica Neue")
+barplot(conservative_predict_province_prob~province, data=additional_data, 
+        ylim=c(0,1), las=2, cex.names = 0.8, 
+        main="The Proportion of Voters in Favour of the Conservative Party on a Provincial Basis", cex.main=1,
+        names.arg=c("NL","PE","NS","NB","QC","ON","MB","SK","AB","BC","NT"),
+        xlab="Province (Abbreviations)", ylab="Proportion of Voters")
+mtext("Figure 1: Barplot of The Proportion of Voters in Favour of the Conservative Party per Province Basis", side = 1, outer=TRUE, adj = 0, cex=0.8) 
+```
+
+# 4. Discussion
+
+From the survey data obtained from the Canadian Election Study, variables that
+have influence on voting decisions including age, gender/sex, region, ethnicity,
+education level, employment status, knowledge of the French language, place of
+birth, household income and marital status were chosen. According to the paper
+"Voting Behavior in Canada" released by the UBC Press, "the study of
+sociodemographic voting factors has revealed [that] ... region matters much, and
+significant gender and marriage gaps exist" (Anderson and Stephenson, 2010,
+p.18). This analysis is in line with this finding because regions such as
+Saskatchewan, Alberta and Northern Canada have slope estimates all greater than
+1.3 while other provinces have slope estimates less than 0.5. This shows that
+region affects the voters' preference of a political party.
+
+In addition, the same paper states that characteristics such as ethnicity,
+income, race, occupation, education and class influences the voter's attachment
+to a certain party (Anderson and Stephenson, 2010, p. 3). For example, this
+paper explains that long-term unemployment leads the voters to support
+non-mainstream parties other than the Liberals and Conservatives (Anderson and
+Stephenson, 2010, p. 23). In the model of this report, employment and intention
+to vote for the Conservative Party showed a positive slope. However, the
+relationship was very weak with a slope estimate of 0.0925 and a p-value above
+0.05. This indicates that the variable 'employment status' may not have an over
+and above influence alone on the response variable. However, forward selection
+with AIC indicated that inclusion of this variable minimized AIC, so this
+variable was left in the final model.
+
+In the real 2019 Canadian election, the Conservative Party won 34.34% of the
+popular vote on a national level. However, the prediction based on a 100%
+turnout rate revealed that the Conservatives might have won only 22.25% of the
+votes. This is in accordance with the general belief that higher turnout rates
+are bad for the more Conservative party. Further analysis conducted on a
+provincial level also showed similar results. Provinces with high turnout rates
+had a smaller discrepancy with the actual election data. For example, for PEI
+which had the highest turnout rate of 74.0%, 27.4% voted for the Conservative
+Party and this analysis shows a similar result of 22.44%. This shows that our
+prediction relays the same result, with an even lower percentage. In addition,
+in Alberta which had a turnout rate of 69.2%, the Conservative actually won
+69.2% and the prediction of this analysis shows that 48% of voters intend to
+vote for the Conservative Party. The statistics from the real 2019 federal
+elections showed that the highest preference for the Conservative Party was in
+Saskatchewan and Alberta. 64.3% of the popular vote in Saskatchewan was for the
+Conservatives. The prediction is in line with the real statistics: the highest
+proportion of voters in favour of the Conservative Party among the provinces is
+still Saskatchewan and Alberta. However, lower proportion may be due to the
+higher turnout rate assumed in this model.
+
+In conclusion, the Conservative Party will lose not only the overall nationwide
+popular vote of the 2019 federal election but also in every province under the
+assumption of a 100% turnout rate. This analysis shows that only 0.2225 will
+vote for the Conservative Party, and Table 3 of this report which illustrates
+the proportion of voters in favour of voting for the Conservative Party in all
+regions is less than 0.5. The maximum proportion is 0.4816 in the province of
+Alberta. Therefore, regardless of which type of analysis is done, it is not
+likely that the Conservative Party will win if everyone had voted.
+
+
+### 4.1 Weaknesses
+
+In this analysis, the survey data and actual federal election are from 2019 and
+the census data used is from 2016. Thus, a possible source of error is that the
+weights used in post-stratification are likely to be different from the actual
+population distribution in 2019. Also, the Canadian election system is based on
+seats of the House of Commons won from the votes per federal electoral district.
+This determines the Prime Minister of Canada and whether a majority or minority
+government is formed. However, the data used in this analysis only provided
+information about subjects' province of residence, not the federal electoral
+district. Due to the missing information, the analysis was only done on a
+national and provincial level. Therefore, it was not possible to accurately
+predict which party will win based on the election system of Canada. For
+example, even in the real 2019 elections, the Conservatives won the most votes
+in the national level, but the Liberals won more seats.
+
+In addition, there are other more important variables not included in this
+report that have great influence on the elections including the opinions on
+carbon tax, cannabis, free trade and environmental regulations. Opinions on
+these issues have influence on which party a voter is attached to and which
+Prime Minister the voter supports. However, these variables were not included
+because such data cannot not be found in the census data. Since the census data
+does not usually involve information on political affiliations and voting
+preferences, these variables could not be used to create a more valid and
+intricate model.
+
+### 4.2 Next Steps
+
+If voting data in each of the 338 federal electoral district is available, this
+information can be used instead of province to re-adjust the number of bins and
+proportion per bin. This additional information can yield a prediction that
+aligns more with the actual Canadian election system. Also, census data is
+released every five years by Statistics Canada. Since there is a three year gap
+between the 2016 census data and and two year gap between the 2021 census data,
+the 2021 census data can provide a more accurate population distribution for an
+additional analysis. Please note that this analysis was based on a 100% turnout
+rate, so even if we do an additional analysis, it will demonstrate how the
+result might have been different if everyone voted, not a more accurate result
+that might replicate the actual post-hoc data.
+
+# References
+
+Anderson, C. D., & Stephenson, L. (2010). The Puzzle of Elections and Voting in 
+  Canada, Voting Behaviour in Canada (pp.10-30). UBC Press.
+  
+Arnold, F., & Freier, R. (2016). Only conservatives are voting in the rain: 
+  Evidence from German local and state elections. Electoral Studies, 41, 216-221.
+  https://doi.org/10.1016/j.electstud.2015.11.005
+
+Arnold, F., & Freier, F. (2015). The Partisan Effects of Voter Turnout: How 
+  Conservatives Profit from Rainy Election Days. DIW Berlin Discussion Paper, 
+  1463, 1-12. http://dx.doi.org/10.2139/ssrn.2591378 
+
+Artés, J. (2014). The rain in Spain: Turnout and partisan voting in Spanish
+  elections. European Journal of Political Economy, 34, 126-141.
+  https://doi.org/10.1016/j.ejpoleco.2014.01.005 
+
+Benjamin Rich (2020). table1: Tables of Descriptive Statistics in HTML. R package
+  version 1.2.1. https://CRAN.R-project.org/package=table1
+  
+Caetano, S. (2020). Multilevel Regression & Poststratification 
+  [PowerPoint slides]. Retrieved from University of Toronto STA304 Quercus. 
+
+David Robinson, Alex Hayes and Simon Couch (2020). broom: Convert Statistical 
+  Objects into Tidy Tibbles. 
+  R package version 0.7.0. https://CRAN.R-project.org/package=broom
+
+Elections Canada. (2019). Appendix – Report on the 43rd General Election of 
+  October 21, 2019. https://www.elections.ca/content.aspx?section=res&dir=rep/off/sta_ge43&document=app1&lang=e
+  
+Gomez, B., Hansford, T., & Krause, G. (2007). The Republicans Should Pray for 
+  Rain: Weather, Turnout, and Voting in U.S. Presidential Elections. The Journal
+  of Politics, 69(3),  https://doi.org/10.1111/j.1468-2508.2007.00565.x
+
+Knack, S. (1994). Does rain help the Republicans? Theory and evidence on turnout
+  and the vote. Public Choice, 79, 187–209. https://doi.org/10.1007/BF01047926
+
+Max Gordon, Stephen Gragg and Peter Konings (2020). htmlTable: Advanced Tables 
+  for Markdown/HTML. R package version 2.1.0. 
+  https://CRAN.R-project.org/package=htmlTable
+
+Statistics Canada. 2016. Census of Canada, 2016, Families File (public-use 
+  microdata file). Statistics Canada (producer). Using CHASS (distributor).
+  http://dc.chass.utoronto.ca.myaccess.library.utoronto.ca/ 
+  (accessed December 01, 2020). All computations, use and interpretation of 
+  these data are entirely those of the author.
+  
+Statistics Canada. (2020). Voter turnout by age group, 2011, 2015 and 2019
+  federal elections. 
+  https://www150.statcan.gc.ca/n1/daily-quotidien/200226/cg-b001-eng.htm
+
+Stephenson, L. B., Harell, A. Rubenson, D. & Loewen, P. (2020). 2019 Canadian 
+  Election Study - Online Survey: Version 1 [dataset]. Harvard Dataverse. 
+  https://doi.org/10.7910/DVN/DUS88V
+  
+Sue-Chee, S. (2020). Module 11: Variable Selection [PowerPoint slides]. 
+  Retrieved from University of Toronto STA302 Quercus. 
+
+Wickham et al., (2019). Welcome to the tidyverse. Journal of Open Source 
+  Software, 4(43), 1686, https://doi.org/10.21105/joss.01686
+
